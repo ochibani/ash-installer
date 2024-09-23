@@ -1,2 +1,2 @@
 # ash-installer
-Installer for AshOS
+Experimental installer for [AshOS](https://github.com/ashos/ashos).
