@@ -1,0 +1,13 @@
+[system-packages]
+base
+linux
+btrfs-progs
+sudo
+grub
+python3
+python-anytree
+dhcpcd
+networkmanager
+nano
+linux-firmware
+paru

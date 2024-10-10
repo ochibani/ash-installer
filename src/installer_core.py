@@ -131,7 +131,7 @@ def clear():
 #   Users
 def create_user(u, g):
   # Get path to useradd/adduser even if not in PATH (e.g. Fedora)
-    uau = find_command(["useradd"])
+    uau = find_command(["useradd", "adduser"])
     if 'busybox' in os.path.realpath(uau):
         os.system(f"{uau} -h /home/{u} -G {g} -s /bin/sh -D {u}")
     else: # util-linx (non-Alpine)
@@ -310,7 +310,7 @@ def grub_ash(v): # REVIEW removed "{SUDO}" from all lines below
         else:
             os.system(f'{grub_mkimage} -p "(crypto0)/@boot_{distro}/grub{v}" -O i386-pc -c /etc/grub_luks2.conf -o /boot/grub{v}/i386-pc/core_luks2.img {luks_grub_args}') # 'biosdisk' module not needed eh?
             os.system(f'dd oflag=seek_bytes seek=512 if=/boot/grub{v}/i386-pc/core_luks2.img of={bp if is_boot_external else args[2]}') # REVIEW
-    os.system(f'{grub_mkconfig} {bp if is_boot_external else args[2]} -o /boot/grub{v}/grub.cfg')
+    os.system(f"{grub_mkconfig} {bp if is_boot_external else args[2]} -o /boot/grub{v}/grub.cfg")
     os.system(f"mkdir -p /boot/grub{v}/BAK") # Folder for backing up grub configs created by ashpk
     os.system(f"sed -i 's|subvol=@{distro_suffix}|subvol=@.snapshots{distro_suffix}/rootfs/snapshot-deploy|g' /boot/grub{v}/grub.cfg")
     # Create a mapping of "distro" <=> "BootOrder number". Ash reads from this file to switch between distros.
@@ -334,18 +334,35 @@ def post_bootstrap(super_group): # REVIEW removed "{SUDO}" from all lines below
     #os.system(f"{SUDO} ln -srf /mnt/.snapshots/ash/tmp /mnt/tmp")
     os.system("chmod 700 /.snapshots/ash/root")
     os.system("chmod 1777 /.snapshots/ash/tmp")
+    os.system(f"mkdir -p /usr/share/ash")
+    os.system(f"chmod 755 /usr/share/ash")
     os.system(f"echo '0' > /usr/share/ash/snap")
+    os.system(f"mkdir /etc/ash")
+    os.system("chmod 755 /etc/ash")
+    os.system(f"echo 'mutable_dirs::' > /etc/ash/ash.conf")
+    os.system(f"echo 'mutable_dirs_shared::' >> /etc/ash/ash.conf")
+    if distro in ("arch", "cachyos", "endeavouros"):
+        os.system(f"echo 'aur::False' >> /etc/ash/ash.conf")
+    os.system("chmod 644 /etc/ash/ash.conf")
+    os.system(f"touch /etc/ash/profile")
+    os.system("chmod 644 /etc/ash/profile")
     os.system(f"echo '0' > /.snapshots/ash/upstate")
     os.system(f"echo $(date) >> /.snapshots/ash/upstate")
-    #os.system(f"mkdir /etc/ash")
-    #os.system("chmod 755 /etc/ash")
-    #os.system(f"echo 'mutable_dirs::' > /etc/ash/ash.conf")
-    #os.system(f"echo 'mutable_dirs_shared::' >> /etc/ash/ash.conf")
-    #if distro in ("arch", "cachyos", "endeavouros"):
-        #os.system(f"echo 'aur::False' >> /etc/ash/ash.conf")
-    #os.system(f"cat {installer_dir}/profile > /etc/ash/profile")
-    #os.system("chmod 644 /etc/ash/ash.conf")
-    #os.system("chmod 644 /etc/ash/profile")
+     # Stupid
+    os.system(f"echo '[system-packages]' >> /etc/ash/profile")
+    os.system(f"echo linux >> /etc/ash/profile")
+    os.system(f"echo base >> /etc/ash/profile")
+    os.system(f"echo btrfs-progs >> /etc/ash/profile")
+    os.system(f"echo sudo >> /etc/ash/profile")
+    os.system(f"echo grub >> /etc/ash/profile")
+    os.system(f"echo dhcpcd >> /etc/ash/profile")
+    os.system(f"echo networkmanager >> /etc/ash/profile")
+    os.system(f"echo nano >> /etc/ash/profile")
+    os.system(f"echo linux-firmware >> /etc/ash/profile")
+    os.system(f"echo python3 >> /etc/ash/profile")
+    os.system(f"echo python-anytree >> /etc/ash/profile")
+    os.system(f"echo paru >> /etc/ash/profile")
+    os.system("chmod 644 /etc/ash/profile")
   # Update fstab
     with open('/etc/fstab', 'a') as f: # assumes script run as root # REVIEW 'w'
         for mntdir in mntdirs: # common entries
@@ -368,26 +385,27 @@ def post_bootstrap(super_group): # REVIEW removed "{SUDO}" from all lines below
   # files operations (part 2) - create symlinks
     os.system("mkdir -p /.snapshots/ash/snapshots")
     os.system(f"echo '{to_uuid(os_root)}' > /.snapshots/ash/part")
+    os.system(f"echo '' > /.snapshots/ash/deploy-tmp")
     #if is_ash_bundle:
     #    if is_efi:
     #        os.system("ln -sf /boot/efi/ash /usr/bin/ash")
     #    else:
     #        os.system("ln -sf /.snapshots/ash/bundle/ash /usr/bin/ash")
     #else:
-             #os.system("ln -sf /.snapshots/ash/ash /usr/sbin/ash")
+    os.system("ln -sf /.snapshots/ash/ash /usr/sbin/ash")
     #os.system(f"{SUDO} ln -srf /mnt/.snapshots/ash/detect_os.sh /mnt/usr/bin/detect_os.sh")
     os.system("ln -sf /.snapshots/ash /var/lib/ash")
   # Initialize fstree
     os.system("echo {\\'name\\': \\'root\\', \\'children\\': [{\\'name\\': \\'0\\'}]} > /.snapshots/ash/fstree")
   # Create user and set password
     if distro == "alpine": # REVIEW not generic
-        set_password("root") # will fix for "doas"
+        set_password("root", "") # will fix for "doas"
     else:
         set_password("root")
     if distro !="kicksecure": # REVIEW not generic
         create_user(username, super_group)
         if distro == "alpine": # REVIEW not generic
-            set_password(username) # will fix for "doas"
+            set_password(username, "") # will fix for "doas"
         else:
             set_password(username)
     else:
@@ -450,8 +468,8 @@ def pre_bootstrap(): # REVIEW removed {SUDO} from all lines below
     if is_luks:
         os.system(f"cp -a {installer_dir}/src/prep/grub_luks2.conf /mnt/tmp/")
     #if not is_ash_bundle: # else: post function will handle
-    #os.system(f"cp {installer_dir}/ash /mnt/.snapshots/ash/ash")
-    #os.system("chmod +x /mnt/.snapshots/ash/ash")
+    os.system(f"cp {installer_dir}/ash /mnt/.snapshots/ash/ash")
+    os.system("chmod +x /mnt/.snapshots/ash/ash")
     #os.system(f"cp -a {installer_dir}/src/detect_os.py /mnt/.snapshots/ash/")
 
 #   rm -rf for deleting everything recursively (even top folder)
@@ -475,11 +493,11 @@ def rmrf_star_ERROR(a_path): # TODO
     files = glob(f"{a_path}/*")
     rmrf(*files)
 
-def set_password(u): # REVIEW Use super_group?
+def set_password(u, s="sudo"): # REVIEW Use super_group?
     clear()
     while True:
         print(f"Setting a password for '{u}':")
-        os.system(f"passwd {u}")
+        os.system(f"{s} passwd {u}")
         if yes_no("Was your password set properly?"):
             break
         else:

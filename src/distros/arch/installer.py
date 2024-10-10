@@ -10,7 +10,7 @@ from setup import args, distro
 is_format_btrfs = True # REVIEW temporary
 KERNEL = "" # options: https://wiki.archlinux.org/title/kernel e.g. "-xanmod"
 packages = f"base linux{KERNEL} btrfs-progs sudo grub dhcpcd networkmanager nano \
-linux-firmware python3 python-anytree paru ash" # os-prober bash tmux arch-install-scripts
+linux-firmware python3 python-anytree paru" # os-prober bash tmux arch-install-scripts
 #if not is_ash_bundle:
 #    packages +=  " python3 python-anytree"
 if is_efi:
@@ -64,6 +64,7 @@ def main():
 
     #   5. Services (init, network, etc.)
     #os.system("/usr/lib/systemd/system-generators/systemd-fstab-generator /run/systemd/generator '' ''") # REVIEW recommended as fstab changed. "systemctl daemon-reload"
+    os.system("systemctl daemon-reload")
     os.system("systemctl enable NetworkManager")
 
     #   6. Boot and EFI
