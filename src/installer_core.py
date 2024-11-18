@@ -340,7 +340,7 @@ def post_bootstrap(super_group): # REVIEW removed "{SUDO}" from all lines below
     os.system(f"mkdir /etc/ash")
     os.system("chmod 755 /etc/ash")
     os.system(f"echo 'mutable_dirs::' > /etc/ash/ash.conf")
-    os.system(f"echo 'mutable_dirs_shared::' >> /etc/ash/ash.conf")
+    os.system(f"echo 'mutable_dirs_shared::var' >> /etc/ash/ash.conf")
     if distro in ("arch", "cachyos", "endeavouros"):
         os.system(f"echo 'aur::False' >> /etc/ash/ash.conf")
     os.system("chmod 644 /etc/ash/ash.conf")
