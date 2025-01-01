@@ -362,6 +362,7 @@ def post_bootstrap(super_group): # REVIEW removed "{SUDO}" from all lines below
     os.system(f"echo python3 >> /etc/ash/profile")
     os.system(f"echo python-anytree >> /etc/ash/profile")
     os.system(f"echo paru >> /etc/ash/profile")
+    os.system(f"echo ash-git >> /etc/ash/profile")
     os.system("chmod 644 /etc/ash/profile")
   # Update fstab
     with open('/etc/fstab', 'a') as f: # assumes script run as root # REVIEW 'w'
@@ -392,7 +393,7 @@ def post_bootstrap(super_group): # REVIEW removed "{SUDO}" from all lines below
     #    else:
     #        os.system("ln -sf /.snapshots/ash/bundle/ash /usr/bin/ash")
     #else:
-    os.system("ln -sf /.snapshots/ash/ash /usr/sbin/ash")
+    #os.system("ln -sf /.snapshots/ash/ash /usr/sbin/ash")
     #os.system(f"{SUDO} ln -srf /mnt/.snapshots/ash/detect_os.sh /mnt/usr/bin/detect_os.sh")
     os.system("ln -sf /.snapshots/ash /var/lib/ash")
   # Initialize fstree
@@ -468,8 +469,8 @@ def pre_bootstrap(): # REVIEW removed {SUDO} from all lines below
     if is_luks:
         os.system(f"cp -a {installer_dir}/src/prep/grub_luks2.conf /mnt/tmp/")
     #if not is_ash_bundle: # else: post function will handle
-    os.system(f"cp {installer_dir}/ash /mnt/.snapshots/ash/ash")
-    os.system("chmod +x /mnt/.snapshots/ash/ash")
+    #os.system(f"cp {installer_dir}/ash /mnt/.snapshots/ash/ash")
+    #os.system("chmod +x /mnt/.snapshots/ash/ash")
     #os.system(f"cp -a {installer_dir}/src/detect_os.py /mnt/.snapshots/ash/")
 
 #   rm -rf for deleting everything recursively (even top folder)
