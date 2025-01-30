@@ -42,6 +42,7 @@ def main():
             break
 
     #   Go inside chroot
+    os.system("cp /var/cache/pacman/pkg/ash-git* /mnt/var/cache/pacman/pkg/ash-git.pkg.tar.zst")
     cur_dir_code = chroot_in("/mnt")
 
     #   3. Package manager database and config files
