@@ -58,6 +58,9 @@ def main():
     os.system("echo 'LANG=en_US.UTF-8' > /etc/locale.conf")
     os.system(f"ln -sf /usr/share/zoneinfo/{tz} /etc/localtime") # removed /mnt/XYZ from both paths (and from all lines above)
     os.system("/sbin/hwclock --systohc")
+    os.system("useradd -m -s /bin/bash aur")
+    os.system("echo 'aur ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers")
+    os.system("su aur -c paru -S ash-git --noconfirm")
 
     #   Post bootstrap
     post_bootstrap(super_group)
