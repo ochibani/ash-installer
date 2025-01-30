@@ -61,11 +61,11 @@ def main():
     os.system("/sbin/hwclock --systohc")
     os.system("useradd -m -s /bin/bash aur")
     os.system("echo 'aur ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers")
-    try:
-        # Run the pacman command to install the package
-        sp.run(["pacman", "-U", "/mnt/var/cache/pacman/pkg/ash-git.pkg.tar.zst", "--noconfirm"], check=True)
-    except sp.CalledProcessError as e:
-        print(f"An error occurred: {e}")
+    os.system("su aur -c 'paru -S rc-local'")
+    install_ash = os.system("pacman -U /mnt/var/cache/pacman/pkg/ash-git.pkg.tar.zst --noconfirm")
+    if install_ash != 0:
+        sys.exit(1)
+
     #   Post bootstrap
     post_bootstrap(super_group)
 
