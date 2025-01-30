@@ -63,8 +63,8 @@ def main():
     os.system("echo 'aur ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers")
     try:
         # Run the pacman command to install the package
-        subprocess.run(["pacman", "-U", "/mnt/var/cache/pacman/pkg/ash-git*", "--noconfirm"], check=True)
-    except subprocess.CalledProcessError as e:
+        sp.run(["pacman", "-U", "/mnt/var/cache/pacman/pkg/ash-git*", "--noconfirm"], check=True)
+    except sp.CalledProcessError as e:
         print(f"An error occurred: {e}")
     #   Post bootstrap
     post_bootstrap(super_group)
