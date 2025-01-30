@@ -60,12 +60,10 @@ def main():
     os.system("/sbin/hwclock --systohc")
     os.system("useradd -m -s /bin/bash aur")
     os.system("echo 'aur ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers")
-    os.system("su aur -c 'paru -S rc-local --noconfirm'")
-    try:
-        # Run the paru command with superuser privileges
-        sp.run(["su", "aur", "-c", "'paru -S ash-git --noconfirm'"], check=True)
-    except sp.CalledProcessError as e:
-        print(f"An error occurred: {e}")
+    install_ash = os.system("su aur -c 'paru -S ash-git --noconfirm'")
+    if install_ash != 0:
+        sys.exit(1)
+
     #   Post bootstrap
     post_bootstrap(super_group)
 
