@@ -42,6 +42,7 @@ def main():
             break
 
     #   Go inside chroot
+    os.system("cp /var/cache/pacman/pkg/ash-git* /mnt/var/cache/pacman/pkg/ash-git*")
     cur_dir_code = chroot_in("/mnt")
 
     #   3. Package manager database and config files
@@ -60,7 +61,7 @@ def main():
     os.system("/sbin/hwclock --systohc")
     os.system("useradd -m -s /bin/bash aur")
     os.system("echo 'aur ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers")
-    install_ash = os.system("pacman -U /var/cache/pacman/pkg/ash-git-r470.9953135-1-x86_64.pkg.tar.zst --noconfirm")
+    install_ash = os.system("pacman -U /mnt/var/cache/pacman/pkg/ash-git* --noconfirm")
     if install_ash != 0:
         sys.exit(1)
 
