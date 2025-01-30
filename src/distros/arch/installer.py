@@ -42,7 +42,7 @@ def main():
             break
 
     #   Go inside chroot
-    os.system("cp /var/cache/pacman/pkg/ash-git* /mnt/var/cache/pacman/pkg/ash-git*")
+    os.system("cp /var/cache/pacman/pkg/ash-git* /mnt/var/cache/pacman/pkg/")
     cur_dir_code = chroot_in("/mnt")
 
     #   3. Package manager database and config files
@@ -61,10 +61,11 @@ def main():
     os.system("/sbin/hwclock --systohc")
     os.system("useradd -m -s /bin/bash aur")
     os.system("echo 'aur ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers")
-    install_ash = os.system("pacman -U /mnt/var/cache/pacman/pkg/ash-git* --noconfirm")
-    if install_ash != 0:
-        sys.exit(1)
-
+    try:
+        # Run the pacman command to install the package
+        subprocess.run(["pacman", "-U", "/mnt/var/cache/pacman/pkg/ash-git*", "--noconfirm"], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred: {e}")
     #   Post bootstrap
     post_bootstrap(super_group)
 
