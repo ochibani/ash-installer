@@ -42,7 +42,7 @@ def main():
             break
 
     #   Go inside chroot
-    os.system("cp /var/cache/pacman/pkg/ash-git* /mnt/var/cache/pacman/pkg/")
+    os.system("cp /var/cache/pacman/pkg/ash-git* /mnt/var/cache/pacman/pkg/ash-git.pkg.tar.zst")
     cur_dir_code = chroot_in("/mnt")
 
     #   3. Package manager database and config files
@@ -63,7 +63,7 @@ def main():
     os.system("echo 'aur ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers")
     try:
         # Run the pacman command to install the package
-        sp.run(["pacman", "-U", "/mnt/var/cache/pacman/pkg/ash-git*", "--noconfirm"], check=True)
+        sp.run(["pacman", "-U", "/mnt/var/cache/pacman/pkg/ash-git.pkg.tar.zst", "--noconfirm"], check=True)
     except sp.CalledProcessError as e:
         print(f"An error occurred: {e}")
     #   Post bootstrap
