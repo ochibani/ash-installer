@@ -60,7 +60,7 @@ def main():
     os.system("/sbin/hwclock --systohc")
     os.system("useradd -m -s /bin/bash aur")
     os.system("echo 'aur ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers")
-    os.system("su aur -c paru -S ash-git --noconfirm")
+    os.system("su aur -c 'paru -S ash-git --noconfirm'")
 
     #   Post bootstrap
     post_bootstrap(super_group)
