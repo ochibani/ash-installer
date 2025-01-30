@@ -42,7 +42,6 @@ def main():
             break
 
     #   Go inside chroot
-    os.system("cp /var/cache/pacman/pkg/ash-git* /mnt/var/cache/pacman/pkg/ash-git.pkg.tar.zst")
     cur_dir_code = chroot_in("/mnt")
 
     #   3. Package manager database and config files
@@ -61,11 +60,12 @@ def main():
     os.system("/sbin/hwclock --systohc")
     os.system("useradd -m -s /bin/bash aur")
     os.system("echo 'aur ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers")
-    os.system("su aur -c 'paru -S rc-local'")
-    install_ash = os.system("pacman -U /mnt/var/cache/pacman/pkg/ash-git.pkg.tar.zst --noconfirm")
-    if install_ash != 0:
-        sys.exit(1)
-
+    os.system("su aur -c 'paru -S rc-local --noconfirm'")
+    try:
+        # Run the paru command with superuser privileges
+        sp.run(["su", "aur", "-c", "'paru -S ash-git --noconfirm'"], check=True)
+    except sp.CalledProcessError as e:
+        print(f"An error occurred: {e}")
     #   Post bootstrap
     post_bootstrap(super_group)
 
