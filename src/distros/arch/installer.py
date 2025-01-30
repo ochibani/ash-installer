@@ -61,7 +61,7 @@ def main():
     os.system("useradd -m -s /bin/bash aur")
     os.system("echo 'aur ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers")
     os.system("su aur -c 'paru -Sy rc-local --noconfirm'")
-    install_ash = os.system("pacman -U '/mnt/var/cache/pacman/pkg/ash-git.pkg.tar.zst' --noconfirm")
+    install_ash = os.system("pacman -U '/var/cache/pacman/pkg/ash-git.pkg.tar.zst' --noconfirm")
     if install_ash != 0:
         sys.exit(1)
 
