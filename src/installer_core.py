@@ -23,8 +23,8 @@ def ashos_mounts():
     os.system(f"{SUDO} mount -o x-mount.mkdir --types proc /proc /mnt/proc")
     os.system(f"{SUDO} mount -o x-mount.mkdir --bind --make-slave /run /mnt/run")
     os.system(f"{SUDO} mount -o x-mount.mkdir --rbind --make-rslave /sys /mnt/sys")
-    if is_efi:
-        os.system(f"{SUDO} mount -o x-mount.mkdir --rbind --make-rslave /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars")
+    #if is_efi:
+        #os.system(f"{SUDO} mount -o x-mount.mkdir --rbind --make-rslave /sys/firmware/efi/efivars /mnt/sys/firmware/efi/efivars")
     os.system(f"{SUDO} cp --dereference /etc/resolv.conf /mnt/etc/") # --remove-destination ? # not writing through dangling symlink! # TODO: 1. move to post_bootstrap 2. try except else
 
 #   Bundle everything ash needs in one executable
@@ -151,18 +151,18 @@ def deploy_base_snapshot(): # REVIEW removed "{SUDO}" from all lines below
     os.system("cp -r --reflink=auto /boot/. /.snapshots/rootfs/snapshot-chr0/boot")
     os.system("cp -r --reflink=auto /etc/. /.snapshots/rootfs/snapshot-chr0/etc")
     os.system("cp -r --reflink=auto /var/. /.snapshots/rootfs/snapshot-chr0/var")
-    os.system(f"{btrfs} sub snap {'' if is_mutable else '-r'} /.snapshots/rootfs/snapshot-chr0 /.snapshots/rootfs/snapshot-0")
+    os.system(f"{btrfs} sub snap {'-r'} /.snapshots/rootfs/snapshot-chr0 /.snapshots/rootfs/snapshot-0") # Disabled {'' if is_mutable else '-r'}
     os.system(f"{btrfs} sub create /.snapshots/boot/boot-deploy")
     os.system(f"{btrfs} sub create /.snapshots/etc/etc-deploy")
     os.system(f"{btrfs} sub create /.snapshots/var/var-deploy")
     os.system("cp -r --reflink=auto /boot/. /.snapshots/boot/boot-deploy")
     os.system("cp -r --reflink=auto /etc/. /.snapshots/etc/etc-deploy")
     os.system("cp -r --reflink=auto /var/. /.snapshots/var/var-deploy")
-    os.system(f"{btrfs} sub snap {'' if is_mutable else '-r'} /.snapshots/boot/boot-deploy /.snapshots/boot/boot-0")
-    os.system(f"{btrfs} sub snap {'' if is_mutable else '-r'} /.snapshots/etc/etc-deploy /.snapshots/etc/etc-0")
-    os.system(f"{btrfs} sub snap {'' if is_mutable else '-r'} /.snapshots/var/var-deploy /.snapshots/var/var-0")
-    if is_mutable: # Mark base snapshot as mutable
-            os.system("touch /.snapshots/rootfs/snapshot-0/usr/share/ash/mutable")
+    os.system(f"{btrfs} sub snap {'-r'} /.snapshots/boot/boot-deploy /.snapshots/boot/boot-0") # Disabled {'' if is_mutable else '-r'}
+    os.system(f"{btrfs} sub snap {'-r'} /.snapshots/etc/etc-deploy /.snapshots/etc/etc-0") # Disabled {'' if is_mutable else '-r'}
+    os.system(f"{btrfs} sub snap {'-r'} /.snapshots/var/var-deploy /.snapshots/var/var-0") # Disabled {'' if is_mutable else '-r'}
+    #if is_mutable: # Mark base snapshot as mutable
+            #os.system("touch /.snapshots/rootfs/snapshot-0/usr/share/ash/mutable")
     os.system(f"{btrfs} sub snap /.snapshots/rootfs/snapshot-0 /.snapshots/rootfs/snapshot-deploy")
     os.system(f"{btrfs} sub del /.snapshots/rootfs/snapshot-chr0")
     os.system(f"{btrfs} sub set-default /.snapshots/rootfs/snapshot-deploy")
@@ -174,14 +174,14 @@ def deploy_base_snapshot(): # REVIEW removed "{SUDO}" from all lines below
 # deploy_to_common_in_chroot()
 #   Copy boot and etc: deployed snapshot <---> common
 def deploy_to_common():
-    if is_efi:
-        os.system("umount /boot/efi")
+    #if is_efi:
+        #os.system("umount /boot/efi")
     os.system("umount /boot")
     #os.system(f'mount {bp if is_boot_external else os_root} -o {"subvol="+f"@boot{distro_suffix}"+"," if not is_boot_external else ""}compress=zstd,noatime /.snapshots/boot/boot-deploy') # REVIEW A similar line for is_home_external needed?
-    if is_boot_external:
-        os.system(f"mount {bp} -o compress=zstd,noatime /.snapshots/boot/boot-deploy")
-    else:
-        os.system(f"mount {os_root} -o subvol=@boot{distro_suffix},compress=zstd,noatime /.snapshots/boot/boot-deploy")
+    #if is_boot_external:
+        #os.system(f"mount {bp} -o compress=zstd,noatime /.snapshots/boot/boot-deploy")
+    #else:
+    os.system(f"mount {os_root} -o subvol=@boot{distro_suffix},compress=zstd,noatime /.snapshots/boot/boot-deploy")
     os.system("cp -r --reflink=auto /.snapshots/boot/boot-deploy/. /boot/")
     os.system("umount /etc")
     os.system(f"mount {os_root} -o subvol=@etc{distro_suffix},compress=zstd,noatime /.snapshots/etc/etc-deploy")
@@ -293,36 +293,36 @@ def grub_ash(v): # REVIEW removed "{SUDO}" from all lines below
     if is_format_btrfs:
         find_command(["btrfs"]) # REVIEW symlink to prevent error in os-prober
     os.system(f"sed -i 's/^GRUB_DISTRIBUTOR.*$/GRUB_DISTRIBUTOR=\"{distro_name}\"/' /etc/default/grub")
-    if is_luks:
-        os.system("sed -i 's/^#GRUB_ENABLE_CRYPTODISK.*$/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub")
-        os.system(f"sed -i -E 's|^#?GRUB_CMDLINE_LINUX=\"|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID={to_uuid(args[1])}:luks_root cryptkey=rootfs:/etc/crypto_keyfile.bin|' /etc/default/grub")
-        os.system(f"sed -e 's|DISTRO|{distro}|' -e 's|LUKS_UUID_NODASH|{to_uuid(args[1]).replace('-', '')}|' \
-                        -e '/^#/d' /tmp/grub_luks2.conf > /etc/grub_luks2.conf") # REVIEW
+    #if is_luks:
+        #os.system("sed -i 's/^#GRUB_ENABLE_CRYPTODISK.*$/GRUB_ENABLE_CRYPTODISK=y/' /etc/default/grub")
+        #os.system(f"sed -i -E 's|^#?GRUB_CMDLINE_LINUX=\"|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID={to_uuid(args[1])}:luks_root cryptkey=rootfs:/etc/crypto_keyfile.bin|' /etc/default/grub")
+        #os.system(f"sed -e 's|DISTRO|{distro}|' -e 's|LUKS_UUID_NODASH|{to_uuid(args[1]).replace('-', '')}|' \
+                        #-e '/^#/d' /tmp/grub_luks2.conf > /etc/grub_luks2.conf") # REVIEW
   # grub-install rewrites default core.img, so run grub-mkimage AFTER!
     if distro != "fedora": # https://bugzilla.redhat.com/show_bug.cgi?id=1917213
-        if is_efi:
-            os.system(f'{grub_install} {bp if is_boot_external else args[2]} --bootloader-id={distro} --modules="{luks_grub_args}" --target=x86_64-efi') # --efi-directory=/boot/efi # REVIEW
-        else:
-            os.system(f'{grub_install} {bp if is_boot_external else args[2]} --bootloader-id={distro} --modules="{luks_grub_args}"') # REVIEW: --target needed for non-uefi?
-    if is_luks: # make LUKS2-compatible grub image
-        if is_efi:
-            os.system(f'{grub_mkimage} -p "(crypto0)/@boot_{distro}/grub{v}" -O x86_64-efi -c /etc/grub_luks2.conf -o /boot/efi/EFI/{distro}/grubx64.efi {luks_grub_args}') # without '/grub' gives error normal.mod not found (maybe only one of these here and grub_luks2.conf is enough?!)
-        else:
-            os.system(f'{grub_mkimage} -p "(crypto0)/@boot_{distro}/grub{v}" -O i386-pc -c /etc/grub_luks2.conf -o /boot/grub{v}/i386-pc/core_luks2.img {luks_grub_args}') # 'biosdisk' module not needed eh?
-            os.system(f'dd oflag=seek_bytes seek=512 if=/boot/grub{v}/i386-pc/core_luks2.img of={bp if is_boot_external else args[2]}') # REVIEW
-    os.system(f"{grub_mkconfig} {bp if is_boot_external else args[2]} -o /boot/grub{v}/grub.cfg")
+        #if is_efi:
+            #os.system(f'{grub_install} {args[2]} --bootloader-id={distro} --modules="{luks_grub_args}" --target=x86_64-efi') # Disabled {bp if is_boot_external else args[2]} # --efi-directory=/boot/efi # REVIEW
+        #else:
+        os.system(f'{grub_install} {args[2]} --bootloader-id={distro} --modules="{luks_grub_args}"') # Disabled {bp if is_boot_external else args[2]} # REVIEW: --target needed for non-uefi?
+    #if is_luks: # make LUKS2-compatible grub image
+        #if is_efi:
+            #os.system(f'{grub_mkimage} -p "(crypto0)/@boot_{distro}/grub{v}" -O x86_64-efi -c /etc/grub_luks2.conf -o /boot/efi/EFI/{distro}/grubx64.efi {luks_grub_args}') # without '/grub' gives error normal.mod not found (maybe only one of these here and grub_luks2.conf is enough?!)
+        #else:
+        #os.system(f'{grub_mkimage} -p "(crypto0)/@boot_{distro}/grub{v}" -O i386-pc -c /etc/grub_luks2.conf -o /boot/grub{v}/i386-pc/core_luks2.img {luks_grub_args}') # 'biosdisk' module not needed eh?
+        #os.system(f'dd oflag=seek_bytes seek=512 if=/boot/grub{v}/i386-pc/core_luks2.img of={args[2]}') # Disabled {bp if is_boot_external else args[2]} # REVIEW
+    os.system(f"{grub_mkconfig} {args[2]} -o /boot/grub{v}/grub.cfg") # Disabled {bp if is_boot_external else args[2]}
     os.system(f"mkdir -p /boot/grub{v}/BAK") # Folder for backing up grub configs created by ashpk
     os.system(f"sed -i 's|subvol=@{distro_suffix}|subvol=@.snapshots{distro_suffix}/rootfs/snapshot-deploy|g' /boot/grub{v}/grub.cfg")
     # Create a mapping of "distro" <=> "BootOrder number". Ash reads from this file to switch between distros.
-    if is_efi:
-        efibootmgr = find_command(["efibootmgr"])
-        if is_boot_external:
-            os.system(f"{efibootmgr} -c -d {bp} -p 1 -L {distro_name} -l '\\EFI\\{distro}\\grubx64.efi'")
-        ex = os.path.exists("/boot/efi/EFI/map.txt")
-        boot_num = sp.check_output(f'{efibootmgr} -v | grep -i {distro} | awk "{{print $1}}" | sed "s|[^0-9]*||g"', encoding='UTF-8', shell=True)
-        with open("/boot/efi/EFI/map.txt", "a") as m:
-            if not ex: m.write("DISTRO,BootOrder\n")
-            if boot_num: m.write(distro + ',' + boot_num)
+    #if is_efi:
+        #efibootmgr = find_command(["efibootmgr"])
+        #if is_boot_external:
+            #os.system(f"{efibootmgr} -c -d {bp} -p 1 -L {distro_name} -l '\\EFI\\{distro}\\grubx64.efi'")
+        #ex = os.path.exists("/boot/efi/EFI/map.txt")
+        #boot_num = sp.check_output(f'{efibootmgr} -v | grep -i {distro} | awk "{{print $1}}" | sed "s|[^0-9]*||g"', encoding='UTF-8', shell=True)
+        #with open("/boot/efi/EFI/map.txt", "a") as m:
+            #if not ex: m.write("DISTRO,BootOrder\n")
+            #if boot_num: m.write(distro + ',' + boot_num)
 
 def check_efi():
     return os.path.exists("/sys/firmware/efi")
@@ -367,13 +367,13 @@ def post_bootstrap(super_group): # REVIEW removed "{SUDO}" from all lines below
   # Update fstab
     with open('/etc/fstab', 'a') as f: # assumes script run as root # REVIEW 'w'
         for mntdir in mntdirs: # common entries
-            f.write(f'UUID=\"{to_uuid(os_root)}\" /{mntdir} btrfs subvol=@{mntdir}{distro_suffix},compress=zstd,noatime{"" if mntdir or is_mutable else ",ro"} 0 0\n') # ro for / entry (only for immutable installs)
-        if is_boot_external:
-            f.write(f'UUID=\"{to_uuid(bp)}\" /boot btrfs subvol=@boot{distro_suffix},compress=zstd,noatime 0 0\n')
-        if is_home_external:
-            f.write(f'UUID=\"{to_uuid(hp)}\" /home btrfs subvol=@home{distro_suffix},compress=zstd,noatime 0 0\n')
-        if is_efi:
-            f.write(f'UUID=\"{to_uuid(args[3])}\" /boot/efi vfat umask=0077 0 2\n')
+            f.write(f'UUID=\"{to_uuid(os_root)}\" /{mntdir} btrfs subvol=@{mntdir}{distro_suffix},compress=zstd,noatime{"" if mntdir else ",ro"} 0 0\n') # Disabled {"" if mntdir or is_mutable else ",ro"} # ro for / entry (only for immutable installs)
+        #if is_boot_external:
+            #f.write(f'UUID=\"{to_uuid(bp)}\" /boot btrfs subvol=@boot{distro_suffix},compress=zstd,noatime 0 0\n')
+        #if is_home_external:
+            #f.write(f'UUID=\"{to_uuid(hp)}\" /home btrfs subvol=@home{distro_suffix},compress=zstd,noatime 0 0\n')
+        #if is_efi:
+            #f.write(f'UUID=\"{to_uuid(args[3])}\" /boot/efi vfat umask=0077 0 2\n')
         #if is_ash_bundle and not is_efi:
         #    f.write(f'UUID=\"{to_uuid(args[2]+"1")}\" /.snapshots/ash/bundle vfat umask=0077 0 2\n')
         f.write('/.snapshots/ash/root /root none bind 0 0\n')
@@ -419,12 +419,12 @@ def post_bootstrap(super_group): # REVIEW removed "{SUDO}" from all lines below
 #   Common steps before bootstrapping
 def pre_bootstrap(): # REVIEW removed {SUDO} from all lines below
   # Prep (format partition, etc.)
-    if is_luks and choice != "2":
-        os.system("modprobe dm-crypt")
-        print("--- Create LUKS partition --- ")
-        os.system(f"cryptsetup -y -v -c aes-xts-plain64 -s 512 --hash sha512 --pbkdf pbkdf2 --type luks2 luksFormat {args[1]}")
-        print("--- Open LUKS partition --- ")
-        os.system(f"cryptsetup --allow-discards --persistent --type luks2 open {args[1]} luks_root")
+    #if is_luks and choice != "2":
+        #os.system("modprobe dm-crypt")
+        #print("--- Create LUKS partition --- ")
+        #os.system(f"cryptsetup -y -v -c aes-xts-plain64 -s 512 --hash sha512 --pbkdf pbkdf2 --type luks2 luksFormat {args[1]}")
+        #print("--- Open LUKS partition --- ")
+        #os.system(f"cryptsetup --allow-discards --persistent --type luks2 open {args[1]} luks_root")
   # Mount and create necessary sub-volumes and directories
     if is_format_btrfs:
         if not os.path.exists("/dev/btrfs-control"): # recommended for Alpine (optional)
@@ -436,20 +436,20 @@ def pre_bootstrap(): # REVIEW removed {SUDO} from all lines below
             os.system(f"mount -o subvolid=5 {os_root} /mnt")
         for btrdir in btrdirs: # common entries
             os.system(f"btrfs sub create /mnt/{btrdir}")
-        if is_boot_external:
-            os.system(f"btrfs sub create /mnt/@boot{distro_suffix}")
-        if is_home_external:
-            os.system(f"btrfs sub create /mnt/@home{distro_suffix}")
+        #if is_boot_external:
+            #os.system(f"btrfs sub create /mnt/@boot{distro_suffix}")
+        #if is_home_external:
+            #os.system(f"btrfs sub create /mnt/@home{distro_suffix}")
         os.system("umount /mnt")
         for mntdir in mntdirs: # common entries
             os.system(f"mkdir -p /mnt/{mntdir}") # -p to ignore /mnt exists complaint
             os.system(f"mount {os_root} -o subvol={btrdirs[mntdirs.index(mntdir)]},compress=zstd,noatime /mnt/{mntdir}")
-    if is_boot_external:
-        os.system("mkdir /mnt/boot")
-        os.system(f"mount -m {bp} -o compress=zstd,noatime /mnt/boot")
-    if is_home_external:
-        os.system("mkdir /mnt/home")
-        os.system(f"mount -m {hp} -o compress=zstd,noatime /mnt/home")
+    #if is_boot_external:
+        #os.system("mkdir /mnt/boot")
+        #os.system(f"mount -m {bp} -o compress=zstd,noatime /mnt/boot")
+    #if is_home_external:
+        #os.system("mkdir /mnt/home")
+        #os.system(f"mount -m {hp} -o compress=zstd,noatime /mnt/home")
     for i in ("tmp", "root"):
         os.system(f"mkdir -p /mnt/{i}")
     for i in ("ash", "boot", "etc", "var", "root", "rootfs", "tmp"):
@@ -459,15 +459,15 @@ def pre_bootstrap(): # REVIEW removed {SUDO} from all lines below
     #if is_ash_bundle and not is_efi:
     #    os.system(f"mkdir -p /mnt/.snapshots/ash/bundle") # REVIEW /mnt/boot/bundle better?
     #os.system("mkdir -p /mnt/usr/share/ash/db") # REVIEW was in step "Database and config files" before (better to create after bootstrap for aesthetics)
-    if is_efi:
-        os.system("mkdir -p /mnt/boot/efi")
-        os.system(f"mount {args[3]} /mnt/boot/efi")
+    #if is_efi:
+        #os.system("mkdir -p /mnt/boot/efi")
+        #os.system(f"mount {args[3]} /mnt/boot/efi")
   # files operations (part 1) - copy to chroot, as still accessible (inside host)
 #    if not os.path.exists("/mnt/etc/profile.d"):
 #        os.mkdir("/mnt/etc/profile.d")
 #    os.system(f"cp -a {installer_dir}/src/prep/env_path.sh /mnt/etc/profile.d/ashos.sh") # REVIEW
-    if is_luks:
-        os.system(f"cp -a {installer_dir}/src/prep/grub_luks2.conf /mnt/tmp/")
+    #if is_luks:
+        #os.system(f"cp -a {installer_dir}/src/prep/grub_luks2.conf /mnt/tmp/")
     #if not is_ash_bundle: # else: post function will handle
     #os.system(f"cp {installer_dir}/ash /mnt/.snapshots/ash/ash")
     #os.system("chmod +x /mnt/.snapshots/ash/ash")
@@ -522,8 +522,8 @@ def unmounts(install=""): # REVIEW at least for Arch, {SUDO} is not needed
     else:
         os.system(f"{SUDO} btrfs sub del /mnt/@{distro_suffix}")
     os.system(f"{SUDO} umount --recursive /mnt")
-    if is_luks:
-        os.system(f"{SUDO} cryptsetup close luks_root")
+    #if is_luks:
+        #os.system(f"{SUDO} cryptsetup close luks_root")
 
 #   Generic yes no prompt
 def yes_no(msg):
@@ -552,44 +552,44 @@ with open(f'{installer_dir}/res/logos/logo.txt', 'r') as f:
 DEBUG = "" # options: "", " >/dev/null 2>&1"
 choice, distro_suffix = get_multiboot(distro)
 is_format_btrfs = True # REVIEW temporary
-is_efi = check_efi()
+#is_efi = check_efi()
 #is_ash_bundle = yes_no("Would you like ash as a bundle?")
 #if is_ash_bundle and not is_efi:
 #    print("A special partitioning layout should be used to achieve this. Please modify and run MBR prep script.")
 #    if not yes_no("Confirm that you have done previous step?"):
 #        sys.exit("F: Please modify and run MBR prep script and run setup later!")
-is_boot_external = yes_no("Would you like to use a separate boot partition?")
-is_home_external = yes_no("Would you like to use a separate home partition?")
-is_mutable = yes_no("Would you like this installation to be mutable?")
-if is_boot_external and is_home_external:
-    btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@etc{distro_suffix}", f"@var{distro_suffix}"]
-    mntdirs = ["", ".snapshots", "etc", "var"]
-    bp = get_external_partition('boot')
-    hp = get_external_partition('home')
-elif is_boot_external:
-    btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@etc{distro_suffix}", f"@home{distro_suffix}", f"@var{distro_suffix}"]
-    mntdirs = ["", ".snapshots", "etc", "home", "var"]
-    bp = get_external_partition('boot')
-elif is_home_external:
-    btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@boot{distro_suffix}", f"@etc{distro_suffix}", f"@var{distro_suffix}"]
-    mntdirs = ["", ".snapshots", "boot", "etc", "var"]
-    hp = get_external_partition('home')
-else:
-    btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@boot{distro_suffix}", f"@etc{distro_suffix}", f"@home{distro_suffix}", f"@var{distro_suffix}"]
-    mntdirs = ["", ".snapshots", "boot", "etc", "home", "var"]
+#is_boot_external = yes_no("Would you like to use a separate boot partition?")
+#is_home_external = yes_no("Would you like to use a separate home partition?")
+#is_mutable = yes_no("Would you like this installation to be mutable?")
+#if is_boot_external and is_home_external:
+    #btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@etc{distro_suffix}", f"@var{distro_suffix}"]
+    #mntdirs = ["", ".snapshots", "etc", "var"]
+    #bp = get_external_partition('boot')
+    #hp = get_external_partition('home')
+#elif is_boot_external:
+    #btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@etc{distro_suffix}", f"@home{distro_suffix}", f"@var{distro_suffix}"]
+    #mntdirs = ["", ".snapshots", "etc", "home", "var"]
+    #bp = get_external_partition('boot')
+#elif is_home_external:
+    #btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@boot{distro_suffix}", f"@etc{distro_suffix}", f"@var{distro_suffix}"]
+    #mntdirs = ["", ".snapshots", "boot", "etc", "var"]
+    #hp = get_external_partition('home')
+#else:
+btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@boot{distro_suffix}", f"@etc{distro_suffix}", f"@home{distro_suffix}", f"@var{distro_suffix}"]
+mntdirs = ["", ".snapshots", "boot", "etc", "home", "var"]
 #if is_ash_bundle and not is_efi: # disadvantage: only for BTRFS
 #    mntdirs += " bundle"
 #    btrdirs.append(f"@bundle{distro_suffix}")
-is_luks = yes_no("Would you like to use LUKS?")
-if is_luks:
-    os_root = "/dev/mapper/luks_root"
-    if is_efi:
-        luks_grub_args = "luks2 btrfs part_gpt cryptodisk pbkdf2 gcry_rijndael gcry_sha512"
-    else:
-        luks_grub_args = "luks2 btrfs biosdisk part_msdos cryptodisk pbkdf2 gcry_rijndael gcry_sha512"
-else:
-    os_root = args[1]
-    luks_grub_args = ""
+#is_luks = yes_no("Would you like to use LUKS?")
+#if is_luks:
+    #os_root = "/dev/mapper/luks_root"
+    #if is_efi:
+        #luks_grub_args = "luks2 btrfs part_gpt cryptodisk pbkdf2 gcry_rijndael gcry_sha512"
+    #else:
+    #luks_grub_args = "luks2 btrfs biosdisk part_msdos cryptodisk pbkdf2 gcry_rijndael gcry_sha512"
+#else:
+os_root = args[1]
+luks_grub_args = ""
 hostname = get_name('hostname')
 username = get_name('username') # REVIEW made it global variable for Alpine installer
 tz = get_item_from_path("timezone", "/usr/share/zoneinfo")

@@ -13,10 +13,10 @@ packages = f"base linux{KERNEL} btrfs-progs sudo grub dhcpcd networkmanager nano
 linux-firmware python3 python-anytree paru vim fakeroot debugedit reflector" # os-prober bash tmux arch-install-scripts
 #if not is_ash_bundle:
 #    packages +=  " python3 python-anytree"
-if is_efi:
-    packages += " efibootmgr"
-if is_luks:
-    packages += " cryptsetup" # REVIEW
+#if is_efi:
+    #packages += " efibootmgr"
+#if is_luks:
+    #packages += " cryptsetup" # REVIEW
 super_group = "wheel"
 v = "" # GRUB version number in /boot/grubN
 
@@ -96,16 +96,16 @@ def main():
     print("You can reboot now :)")
 
 def initram_update(): # REVIEW removed "{SUDO}" from all lines below
-    if is_luks:
-        os.system("dd bs=512 count=4 if=/dev/random of=/etc/crypto_keyfile.bin iflag=fullblock") # removed /mnt/XYZ from output (and from lines below)
-        os.system("chmod 000 /etc/crypto_keyfile.bin") # Changed from 600 as even root doesn't need access
-        os.system(f"cryptsetup luksAddKey {args[1]} /etc/crypto_keyfile.bin")
-        os.system("sed -i -e '/^HOOKS/ s/filesystems/encrypt filesystems/' \
-                        -e 's|^FILES=(|FILES=(/etc/crypto_keyfile.bin|' /etc/mkinitcpio.conf")
+    #if is_luks:
+        #os.system("dd bs=512 count=4 if=/dev/random of=/etc/crypto_keyfile.bin iflag=fullblock") # removed /mnt/XYZ from output (and from lines below)
+        #os.system("chmod 000 /etc/crypto_keyfile.bin") # Changed from 600 as even root doesn't need access
+        #os.system(f"cryptsetup luksAddKey {args[1]} /etc/crypto_keyfile.bin")
+        #os.system("sed -i -e '/^HOOKS/ s/filesystems/encrypt filesystems/' \
+                        #-e 's|^FILES=(|FILES=(/etc/crypto_keyfile.bin|' /etc/mkinitcpio.conf")
     if is_format_btrfs: # REVIEW temporary
         os.system(f"sed -i 's|^MODULES=(|MODULES=(btrfs|' /etc/mkinitcpio.conf") # TODO if array not empty, needs to be "btrfs "
-    if is_luks or is_format_btrfs: # REVIEW mkinitcpio needed to run without these conditions too?
-        os.system(f"mkinitcpio -p linux{KERNEL}")
+    #if is_luks or is_format_btrfs: # REVIEW mkinitcpio needed to run without these conditions too?
+        #os.system(f"mkinitcpio -p linux{KERNEL}")
 
 def strap():
     sp.check_call(f"pacstrap /mnt --needed {packages}", shell=True)
