@@ -241,15 +241,15 @@ def get_name(thing):
 #   2. Underscore plus name of distro if it should be appended to sub-volume names
 def get_multiboot(dist):
     clear()
-    msg = "Initiate a new AshOS install?\n \
-        Y: Wipes root partition\n \
-        N: Add to an already installed AshOS (advanced multi-booting)"
-    if yes_no(msg):
+    #msg = "Initiate a new AshOS install?\n \
+        #Y: Wipes root partition\n \
+        #N: Add to an already installed AshOS (advanced multi-booting)"
+    #if yes_no(msg):
         #return "1", f"_{dist}"
-        return "1", f"_linux"
-    else:
+    return "1", f"_linux"
+    #else:
         #return "2", f"_{dist}"
-        return "2", f"_linux"
+        #return "2", f"_linux"
 
 #   Return IP address
 def get_ip():
