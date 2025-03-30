@@ -10,7 +10,7 @@ from setup import args, distro
 ARCH = "amd64"
 RELEASE = "bookworm"
 KERNEL = "" # options: https://wiki.archlinux.org/title/kernel e.g. "-xanmod"
-packages = f"linux-image-{ARCH}, btrfs-progs, curl, sudo, dhcpcd5, network-manager, locales, nano, console-setup, \
+packages = f"linux-image-{ARCH}, btrfs-progs, curl, sudo, network-manager, locales, nano, console-setup, \
  python3, python3-anytree, vim" # os-prober bash tmux arch-install-scripts firmware-linux
 
 #if not is_ash_bundle:
