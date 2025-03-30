@@ -10,15 +10,15 @@ from setup import args, distro
 ARCH = "amd64"
 RELEASE = "bookworm"
 KERNEL = "" # options: https://wiki.archlinux.org/title/kernel e.g. "-xanmod"
-packages = f"linux-image-{ARCH}, btrfs-progs, curl, sudo, dhcpcd, network-manager, locales, nano, console-setup, \
- python3, python3-anytree, vim" # os-prober bash tmux arch-install-scripts firmware-linux
+packages = f"ash,linux-image-{ARCH},btrfs-progs,curl,sudo,dhcpcd,network-manager,locales,nano,console-setup,\
+python3,python3-anytree,vim" # os-prober bash tmux arch-install-scripts firmware-linux
 
 #if not is_ash_bundle:
 #    packages +=  " python3 python-anytree"
 #if is_efi:
     #packages += " grub-efi"
 #else:
-packages += ", grub-pc"
+packages += ",grub-pc"
 
 #if is_luks:
     #packages += " cryptsetup cryptsetup-initramfs cryptsetup-run" # REVIEW
@@ -132,7 +132,7 @@ def main():
 
 def strap():
     #excl = sp.check_output("dpkg-query -f '${binary:Package} ${Priority}\n' -W | grep -v 'required\\|important' | awk '{print $1}'", shell=True).decode('utf-8').strip().replace("\n",",")
-    sp.check_call(f"debootstrap --arch={ARCH} --include={"packages"} {RELEASE} /mnt https://deb.debian.org/debian", shell=True) # REVIEW --include={packages} ? --variant=minbase ? --exclude={excl}
+    sp.check_call(f"debootstrap --arch={ARCH} --include={packages} {RELEASE} /mnt https://deb.debian.org/debian", shell=True) # REVIEW --include={packages} ? --variant=minbase ? --exclude={excl}
 
 main()
 
