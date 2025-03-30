@@ -10,17 +10,17 @@ from setup import args, distro
 ARCH = "amd64"
 RELEASE = "bookworm"
 KERNEL = "" # options: https://wiki.archlinux.org/title/kernel e.g. "-xanmod"
-packages = f"linux-image-{ARCH} btrfs-progs curl sudo grub dhcpcd5 network-manager locales nano console-setup \
+packages = f"linux-image-{ARCH} btrfs-progs curl sudo dhcpcd5 network-manager locales nano console-setup \
  python3 python3-anytree vim" # os-prober bash tmux arch-install-scripts firmware-linux
 
 #if not is_ash_bundle:
 #    packages +=  " python3 python-anytree"
-if is_efi:
-    packages += " grub-efi"
-else:
-    packages += " grub-pc"
-if is_luks:
-    packages += " cryptsetup cryptsetup-initramfs cryptsetup-run" # REVIEW
+#if is_efi:
+    #packages += " grub-efi"
+#else:
+packages += " grub-pc"
+#if is_luks:
+    #packages += " cryptsetup cryptsetup-initramfs cryptsetup-run" # REVIEW
 super_group = "sudo"
 v = "2" # GRUB version number in /boot/grubN
 
@@ -103,15 +103,15 @@ def main():
     print("Installation complete!")
     print("You can reboot now :)")
 
-def initram_update():
-    if is_luks:
-        os.system("dd bs=512 count=4 if=/dev/random of=/etc/crypto_keyfile.bin iflag=fullblock")
-        os.system("chmod 000 /etc/crypto_keyfile.bin") # Changed from 600 as even root doesn't need access
-        os.system(f"cryptsetup luksAddKey {args[1]} /etc/crypto_keyfile.bin")
-        os.system("sed -i -e 's|^#KEYFILE_PATTERN=|KEYFILE_PATTERN='/etc/crypto_keyfile.bin'|' /etc/cryptsetup-initramfs/conf-hook")
-        os.system("echo UMASK=0077 >> /etc/initramfs-tools/initramfs.conf")
-        os.system(f"echo 'luks_root '{args[1]}' /etc/crypto_keyfile.bin luks' >> /etc/crypttab")
-        os.system(f"update-initramfs -u") # REVIEW: What about kernel variants?
+#def initram_update():
+    #if is_luks:
+        #os.system("dd bs=512 count=4 if=/dev/random of=/etc/crypto_keyfile.bin iflag=fullblock")
+        #os.system("chmod 000 /etc/crypto_keyfile.bin") # Changed from 600 as even root doesn't need access
+        #os.system(f"cryptsetup luksAddKey {args[1]} /etc/crypto_keyfile.bin")
+        #os.system("sed -i -e 's|^#KEYFILE_PATTERN=|KEYFILE_PATTERN='/etc/crypto_keyfile.bin'|' /etc/cryptsetup-initramfs/conf-hook")
+        #os.system("echo UMASK=0077 >> /etc/initramfs-tools/initramfs.conf")
+        #os.system(f"echo 'luks_root '{args[1]}' /etc/crypto_keyfile.bin luks' >> /etc/crypttab")
+        #os.system(f"update-initramfs -u") # REVIEW: What about kernel variants?
 
 def strap():
     excl = sp.check_output("dpkg-query -f '${binary:Package} ${Priority}\n' -W | grep -v 'required\\|important' | awk '{print $1}'", shell=True).decode('utf-8').strip().replace("\n",",")
