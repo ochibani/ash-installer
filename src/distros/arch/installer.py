@@ -68,6 +68,21 @@ def main():
 
     #   Post bootstrap
     post_bootstrap(super_group)
+    os.system(f"echo 'aur::False' >> /etc/ash/ash.conf")
+    os.system(f"echo '[system-packages]' >> /etc/ash/profile")
+    os.system(f"echo linux >> /etc/ash/profile")
+    os.system(f"echo base >> /etc/ash/profile")
+    os.system(f"echo btrfs-progs >> /etc/ash/profile")
+    os.system(f"echo sudo >> /etc/ash/profile")
+    os.system(f"echo grub >> /etc/ash/profile")
+    os.system(f"echo dhcpcd >> /etc/ash/profile")
+    os.system(f"echo networkmanager >> /etc/ash/profile")
+    os.system(f"echo nano >> /etc/ash/profile")
+    os.system(f"echo linux-firmware >> /etc/ash/profile")
+    os.system(f"echo python3 >> /etc/ash/profile")
+    os.system(f"echo python-anytree >> /etc/ash/profile")
+    os.system(f"echo paru >> /etc/ash/profile")
+    os.system(f"echo ash-git >> /etc/ash/profile")
 
     #   5. Services (init, network, etc.)
     #os.system("/usr/lib/systemd/system-generators/systemd-fstab-generator /run/systemd/generator '' ''") # REVIEW recommended as fstab changed. "systemctl daemon-reload"

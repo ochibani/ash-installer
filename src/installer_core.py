@@ -341,28 +341,12 @@ def post_bootstrap(super_group): # REVIEW removed "{SUDO}" from all lines below
     os.system("chmod 755 /etc/ash")
     os.system(f"echo 'mutable_dirs::' > /etc/ash/ash.conf")
     os.system(f"echo 'mutable_dirs_shared::var' >> /etc/ash/ash.conf")
-    if distro in ("arch", "cachyos", "endeavouros"):
-        os.system(f"echo 'aur::False' >> /etc/ash/ash.conf")
     os.system("chmod 644 /etc/ash/ash.conf")
     os.system(f"touch /etc/ash/profile")
     os.system("chmod 644 /etc/ash/profile")
     os.system(f"echo '0' > /.snapshots/ash/upstate")
     os.system(f"echo $(date) >> /.snapshots/ash/upstate")
      # Stupid
-    os.system(f"echo '[system-packages]' >> /etc/ash/profile")
-    os.system(f"echo linux >> /etc/ash/profile")
-    os.system(f"echo base >> /etc/ash/profile")
-    os.system(f"echo btrfs-progs >> /etc/ash/profile")
-    os.system(f"echo sudo >> /etc/ash/profile")
-    os.system(f"echo grub >> /etc/ash/profile")
-    os.system(f"echo dhcpcd >> /etc/ash/profile")
-    os.system(f"echo networkmanager >> /etc/ash/profile")
-    os.system(f"echo nano >> /etc/ash/profile")
-    os.system(f"echo linux-firmware >> /etc/ash/profile")
-    os.system(f"echo python3 >> /etc/ash/profile")
-    os.system(f"echo python-anytree >> /etc/ash/profile")
-    os.system(f"echo paru >> /etc/ash/profile")
-    os.system(f"echo ash-git >> /etc/ash/profile")
     os.system("chmod 644 /etc/ash/profile")
   # Update fstab
     with open('/etc/fstab', 'a') as f: # assumes script run as root # REVIEW 'w'

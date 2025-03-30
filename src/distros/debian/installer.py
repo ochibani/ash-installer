@@ -10,8 +10,8 @@ from setup import args, distro
 ARCH = "amd64"
 RELEASE = "bookworm"
 KERNEL = "" # options: https://wiki.archlinux.org/title/kernel e.g. "-xanmod"
-packages = f"linux-image-{ARCH} btrfs-progs curl sudo dhcpcd5 network-manager locales nano console-setup \
- python3 python3-anytree vim" # os-prober bash tmux arch-install-scripts firmware-linux
+packages = f"linux-image-{ARCH}, btrfs-progs, curl, sudo, dhcpcd, network-manager, locales, nano, console-setup, \
+ python3, python3-anytree, vim" # os-prober bash tmux arch-install-scripts firmware-linux
 
 #if not is_ash_bundle:
 #    packages +=  " python3 python-anytree"
@@ -79,12 +79,28 @@ def main():
 
     #   Post bootstrap
     post_bootstrap(super_group)
+    os.system(f"echo '[system-packages]' >> /etc/ash/profile")
+    os.system(f"echo ash >> /etc/ash/profile")
+    os.system(f"echo console-setup >> /etc/ash/profile")
+    os.system(f"echo linux-image-{ARCH} >> /etc/ash/profile")
+    os.system(f"echo btrfs-progs >> /etc/ash/profile")
+    os.system(f"echo sudo >> /etc/ash/profile")
+    os.system(f"echo grub >> /etc/ash/profile")
+    os.system(f"echo dhcpcd >> /etc/ash/profile")
+    os.system(f"echo locales >> /etc/ash/profile")
+    os.system(f"echo network-manager >> /etc/ash/profile")
+    os.system(f"echo nano >> /etc/ash/profile")
+    os.system(f"echo python3 >> /etc/ash/profile")
+    os.system(f"echo python3-anytree >> /etc/ash/profile")
+    os.system(f"echo sudo >> /etc/ash/profile")
+    os.system(f"echo paru >> /etc/ash/profile")
+    os.system(f"echo vim >> /etc/ash/profile")
 
     #   5. Services (init, network, etc.)
     os.system("systemctl enable NetworkManager")
 
     #   6. Boot and EFI
-    initram_update()
+    #initram_update()
     grub_ash(v)
 
     #   BTRFS snapshots
@@ -114,8 +130,8 @@ def main():
         #os.system(f"update-initramfs -u") # REVIEW: What about kernel variants?
 
 def strap():
-    excl = sp.check_output("dpkg-query -f '${binary:Package} ${Priority}\n' -W | grep -v 'required\\|important' | awk '{print $1}'", shell=True).decode('utf-8').strip().replace("\n",",")
-    sp.check_call(f"debootstrap --arch={ARCH} --exclude={excl} {RELEASE} /mnt https://deb.debian.org/debian", shell=True) # REVIEW --include={packages} ? --variant=minbase ?
+    #excl = sp.check_output("dpkg-query -f '${binary:Package} ${Priority}\n' -W | grep -v 'required\\|important' | awk '{print $1}'", shell=True).decode('utf-8').strip().replace("\n",",")
+    sp.check_call(f"debootstrap --arch={ARCH} --include={packages} {RELEASE} /mnt https://deb.debian.org/debian", shell=True) # REVIEW --include={packages} ? --variant=minbase ? --exclude={excl}
 
 main()
 
